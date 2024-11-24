@@ -46,8 +46,8 @@ app.post(
         const userId = res.metadata.userId;
         const credits = res.metadata.credits;
         console.log(userId);
-
-        updateUserAccountCredit(userId, credits);
+        console.log(credits);
+        updateUserAccountCredit(userId, Number(credits));
         break;
       }
 
