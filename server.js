@@ -42,7 +42,7 @@ app.post(
     switch (event.type) {
       case "checkout.session.completed": {
         const res = event.data.object;
-
+        // const email=res.email
         const userId = res.metadata.userId;
         const credits = res.metadata.credits;
         console.log(userId);
@@ -71,7 +71,7 @@ const updateUserAccountCredit = async (documentId, usedFreeTime) => {
       USER_ACCOUNT_COLLECTION_ID, // collectionId
       documentId, // documentId
       {
-        usedFreeTime: usedFreeTime,
+        Time: usedFreeTime,
       }
     );
     console.log(result);
