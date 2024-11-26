@@ -47,7 +47,8 @@ app.post(
         const credits = res.metadata.credits;
         console.log(userId);
         console.log(credits);
-        updateUserAccountCredit(userId, Number(credits));
+        //  updateUserAccountCredit(userId, Number(credits));
+        getDocument(userId, Number(credits));
         break;
       }
 
@@ -64,6 +65,21 @@ app.post(
 app.listen(4242, () => console.log("Running on port 4242"));
 
 //for update user credit
+const getDocument = async (documentId, usedFreeTime) => {
+  try {
+    const result = await databases.getDocument(
+      DATABASE_ID, // databaseId
+      USER_ACCOUNT_COLLECTION_ID, // collectionId
+      documentId // documentId
+    );
+    if (result) {
+      const resInInt = parseInt(result.Time, 10);
+      updateUserAccountCredit(documentId, resInInt + usedFreeTime);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
 const updateUserAccountCredit = async (documentId, usedFreeTime) => {
   try {
     const result = await databases.updateDocument(
