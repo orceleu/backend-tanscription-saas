@@ -67,7 +67,6 @@ app.post(
 );
 
 app.listen(4242, () => console.log("Running on port 4242"));
-
 //for update user credit
 const getDocument = async (documentId, usedFreeTime, email) => {
   try {
@@ -76,15 +75,15 @@ const getDocument = async (documentId, usedFreeTime, email) => {
       USER_ACCOUNT_COLLECTION_ID, // collectionId
       documentId // documentId
     );
-    if (result) {
-      const resInInt = parseInt(result.Time, 10);
-      updateUserAccountCredit(documentId, resInInt + usedFreeTime, email);
-    }
+
+    const resInInt = parseInt(result.Time, 10);
+    updateUserAccountCredit(documentId, resInInt + usedFreeTime, email);
+    sendEmail(email, resInInt + usedFreeTime);
   } catch (error) {
     console.log(error);
   }
 };
-const updateUserAccountCredit = async (documentId, Time, email) => {
+const updateUserAccountCredit = async (documentId, Time) => {
   try {
     const result = await databases.updateDocument(
       DATABASE_ID, // databaseId
@@ -96,9 +95,26 @@ const updateUserAccountCredit = async (documentId, Time, email) => {
     );
     console.log(result);
     console.log("inserted to userPlan! .");
-    sendEmail(email, Time);
   } catch (e) {
     console.error("Error:", e);
+  }
+};
+const convertirDuree = (dureeEnsecondes) => {
+  const dureeEnMinutes = dureeEnsecondes / 60;
+  if (dureeEnMinutes < 1) {
+    return `${Math.round(dureeEnsecondes)} sec 
+    `;
+  } else if (dureeEnMinutes < 60) {
+    return `${Math.round(dureeEnMinutes)} min`;
+  } else {
+    const heures = Math.floor(dureeEnMinutes / 60);
+    const minute = Math.round(dureeEnMinutes % 60);
+    if (!isNaN(heures) && !isNaN(minute)) {
+      return `${heures} hours  ${minute} min 
+    `;
+    } else {
+      return "...";
+    }
   }
 };
 async function sendEmail(receiverEmail, credits) {
@@ -109,7 +125,9 @@ async function sendEmail(receiverEmail, credits) {
     html: `<div>
     <p>Hello,</p>
 
-    <p>Thank you for your purchase of <strong>[${credits}]</strong>! Your credits have been added to your account and are ready to use on our platform.</p>
+    <p>Thank you for your purchase of <strong>${convertirDuree(
+      credits
+    )}</strong>! Your credits have been added to your account and are ready to use on our platform.</p>
 
     <p>To access your dashboard, click here: 
         <a href="https://audiscribeai.vercel.app/dashboard" target="_blank">Access my account</a>.
