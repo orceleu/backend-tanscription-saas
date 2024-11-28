@@ -103,10 +103,25 @@ const updateUserAccountCredit = async (documentId, Time, email) => {
 };
 async function sendEmail(receiverEmail, credits) {
   const { data, error } = await resend.emails.send({
-    from: "Acme <onboarding@resend.dev>",
+    from: "AudiscribeAI <onboarding@resend.dev>",
     to: [`${receiverEmail}`],
-    subject: "AudiscribeAI confirmation",
-    html: `<strong>You have succesfully added ${credits} secs credits on your Audiscribe dashboard!</strong>`,
+    subject: "Your Credit Purchase is Confirmed.",
+    html: `<div>
+    <p>Hello,</p>
+
+    <p>Thank you for your purchase of <strong>[${credits}]</strong>! Your credits have been added to your account and are ready to use on our platform.</p>
+
+    <p>To access your dashboard, click here: 
+        <a href="https://audiscribeai.vercel.app/dashboard" target="_blank">Access my account</a>.
+    </p>
+
+    <p>If you have any questions, our team is available at <a href="mailto:orceleu@gmail.com">support_email</a>.</p>
+
+    <p>Thank you for trusting us.</p>
+
+    <p>Best regards,<br>
+    The <strong>Audiscribe AI </strong> Team</p>
+</div>`,
   });
 
   if (error) {
