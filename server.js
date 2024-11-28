@@ -3,11 +3,13 @@ dotenv.config({ path: "./config.env" });
 const cors = require("cors");
 const express = require("express");
 const sdk = require("node-appwrite");
+const { Resend } = require("resend");
+
 const stripe = require("stripe")(process.env.STRIPE_API_KEY);
 const app = express();
 const DATABASE_ID = "6722601a0008810208ab";
 const USER_ACCOUNT_COLLECTION_ID = "6726475d0002a67892f2";
-
+const resend = new Resend(process.env.RESEND_API_KEY);
 const client = new sdk.Client();
 client
   .setEndpoint("https://cloud.appwrite.io/v1")
@@ -45,10 +47,12 @@ app.post(
         // const email=res.email
         const userId = res.metadata.userId;
         const credits = res.metadata.credits;
+        const email = res.metadata.email;
         console.log(userId);
         console.log(credits);
+        console.log(email);
         //  updateUserAccountCredit(userId, Number(credits));
-        getDocument(userId, Number(credits));
+        getDocument(userId, Number(credits), email);
         break;
       }
 
@@ -65,7 +69,7 @@ app.post(
 app.listen(4242, () => console.log("Running on port 4242"));
 
 //for update user credit
-const getDocument = async (documentId, usedFreeTime) => {
+const getDocument = async (documentId, usedFreeTime, email) => {
   try {
     const result = await databases.getDocument(
       DATABASE_ID, // databaseId
@@ -74,27 +78,41 @@ const getDocument = async (documentId, usedFreeTime) => {
     );
     if (result) {
       const resInInt = parseInt(result.Time, 10);
-      updateUserAccountCredit(documentId, resInInt + usedFreeTime);
+      updateUserAccountCredit(documentId, resInInt + usedFreeTime, email);
     }
   } catch (error) {
     console.log(error);
   }
 };
-const updateUserAccountCredit = async (documentId, usedFreeTime) => {
+const updateUserAccountCredit = async (documentId, Time, email) => {
   try {
     const result = await databases.updateDocument(
       DATABASE_ID, // databaseId
       USER_ACCOUNT_COLLECTION_ID, // collectionId
       documentId, // documentId
       {
-        Time: usedFreeTime,
+        Time: Time,
       }
     );
     console.log(result);
     console.log("inserted to userPlan! .");
+    sendEmail(email, Time);
   } catch (e) {
     console.error("Error:", e);
   }
 };
+async function sendEmail(receiverEmail, credits) {
+  const { data, error } = await resend.emails.send({
+    from: "Acme <onboarding@resend.dev>",
+    to: [`${receiverEmail}`],
+    subject: "AudiscribeAI confirmation",
+    html: `<strong>You have succesfully added ${credits} secs credits on your Audiscribe dashboard!</strong>`,
+  });
 
+  if (error) {
+    return console.error({ error });
+  }
+
+  console.log({ data });
+}
 app.use(express.json());
