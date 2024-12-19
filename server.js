@@ -44,7 +44,9 @@ app.post(
     switch (event.type) {
       case "checkout.session.completed": {
         const res = event.data.object;
-        // const email=res.email
+        const subscriptionId = res.subscription;
+        const customerId = res.customer;
+        //
         const userId = res.metadata.userId;
         const credits = res.metadata.credits;
         const email = res.metadata.email;
@@ -52,7 +54,40 @@ app.post(
         console.log(credits);
         console.log(email);
         //  updateUserAccountCredit(userId, Number(credits));
-        getDocument(userId, Number(credits), email);
+        updateUserAccount(
+          userId,
+          Number(credits),
+          subscriptionId,
+          customerId,
+          true
+        );
+        break;
+      }
+      case "customer.subscription.deleted": {
+        const subscriptionDeleted = event.data.object;
+        const customerId = subscriptionDeleted.customer;
+        const userId = subscriptionDeleted.metadata.userId;
+        console.log(userId);
+        setCancelSubscription(userId, false);
+        break;
+      }
+
+      case "customer.subscription.paused": {
+        const subscriptionPaused = event.data.object;
+        const customerIdP = subscriptionPaused.customer;
+        const userId = subscriptionPaused.metadata.userId;
+        console.log(userId);
+        setCancelSubscription(userId, false);
+        break;
+      }
+
+      case "customer.subscription.updated": {
+        const subscriptionUpdated = event.data.object;
+        break;
+      }
+
+      case "customer.subscription.resumed": {
+        const subscriptionResumed = event.data.object;
         break;
       }
 
@@ -77,24 +112,52 @@ const getDocument = async (documentId, usedFreeTime, email) => {
     );
 
     const resInInt = parseInt(result.Time, 10);
-    updateUserAccountCredit(documentId, resInInt + usedFreeTime, email);
-    sendEmail(email, resInInt + usedFreeTime);
+    // updateUserAccountCredit(documentId, resInInt + usedFreeTime, email);
+    //sendEmail(email, resInInt + usedFreeTime);
   } catch (error) {
     console.log(error);
   }
 };
-const updateUserAccountCredit = async (documentId, Time) => {
+const updateUserAccount = async (
+  documentId,
+  Time,
+  subscriptionId,
+  stripeCustomerId,
+  isPro
+) => {
   try {
     const result = await databases.updateDocument(
       DATABASE_ID, // databaseId
       USER_ACCOUNT_COLLECTION_ID, // collectionId
       documentId, // documentId
       {
+        isPro: isPro,
         Time: Time,
+        stripeSubscriptionId: subscriptionId,
+        stripeCustomerId: stripeCustomerId,
       }
     );
     console.log(result);
     console.log("inserted to userPlan! .");
+  } catch (e) {
+    console.error("Error:", e);
+  }
+};
+const setCancelSubscription = async (documentId, isPro) => {
+  try {
+    const result = await databases.updateDocument(
+      DATABASE_ID, // databaseId
+      USER_ACCOUNT_COLLECTION_ID, // collectionId
+      documentId, // documentId
+      {
+        isPro: isPro,
+        // Time: Time,
+        // stripeSubscriptionId: subscriptionId,
+        // stripeCustomerId: stripeCustomerId,
+      }
+    );
+    console.log(result);
+    console.log("Plan canceled! .");
   } catch (e) {
     console.error("Error:", e);
   }
