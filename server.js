@@ -90,6 +90,28 @@ app.post(
         const subscriptionResumed = event.data.object;
         break;
       }
+      case "invoice.payment_succeeded": {
+        const invoice = event.data.object;
+        const userId = invoice.metadata.userId;
+        updateInvoiceUserAccount(userId, 72000, true);
+        //Sent when a PaymentIntent has successfully completed payment.
+        break;
+      }
+      case "invoice.paid": {
+        const invoice = event.data.object;
+        const userId = invoice.metadata.userId;
+        //updateInvoiceUserAccount(userId, 72000, true);
+        //Sent when the invoice is successfully paid. You can provision access to your product when you receive this event and the subscription status is active.
+        break;
+      }
+      case "invoice.upcoming":
+        {
+          const invoice = event.data.object;
+          const userId = invoice.metadata.userId;
+          //updateInvoiceUserAccount(userId, 72000, true);
+          //Sent a few days prior to the renewal of the subscription. The number of days is based on the number set for Upcoming renewal events in the Dashboard. For existing subscriptions, changing the number of days takes effect on the next billing period. You can still add extra invoice items, if needed.
+        }
+        break;
 
       // ... handle other event types
 
@@ -97,7 +119,9 @@ app.post(
         console.log(`Unhandled event type ${event.type}`);
     }
     // Return a 200 response to acknowledge receipt of the event
-    response.send();
+    response.send(); //good ,meme chose
+    //response.status(200).send("OK");
+    // response.json({received: true});
   }
 );
 
@@ -135,6 +159,23 @@ const updateUserAccount = async (
         Time: Time,
         stripeSubscriptionId: subscriptionId,
         stripeCustomerId: stripeCustomerId,
+      }
+    );
+    console.log(result);
+    console.log("inserted to userPlan! .");
+  } catch (e) {
+    console.error("Error:", e);
+  }
+};
+const updateInvoiceUserAccount = async (documentId, Time, isPro) => {
+  try {
+    const result = await databases.updateDocument(
+      DATABASE_ID, // databaseId
+      USER_ACCOUNT_COLLECTION_ID, // collectionId
+      documentId, // documentId
+      {
+        isPro: isPro,
+        Time: Time,
       }
     );
     console.log(result);
